@@ -21,6 +21,7 @@
 * run
 You can run blockguess-random -h to check all options：
 ```
+blockguess-random -h
   -blockhash string
     	BCH block hash (default "000000000000000001ed86134bcee0ad3f879f88e4cc3b27138d5c738de04fa9")
   -h	Print Help Info
