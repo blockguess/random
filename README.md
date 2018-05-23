@@ -34,7 +34,7 @@ blockguess-random
 ```
 output:
 ```
-0072
+0978
 ```
 
 * custom random number and blockhash
@@ -43,7 +43,7 @@ blockguess-random -random 66 -blockhash 000000000000000000e7689ce450f1a9f391402f
 ```
 output
 ```
-0783
+0474
 ```
 
 
