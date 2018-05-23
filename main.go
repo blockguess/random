@@ -2,11 +2,14 @@ package main
 
 import (
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/binary"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"strconv"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 var (
@@ -48,8 +51,7 @@ func main() {
 	}
 
 	shaBytes := blockGuessSha256(hexBytes)
-	xorbytes := hfBytes(shaBytes)
-	xorbytes = hfBytes(xorbytes)
+	xorbytes := kdfBytes(shaBytes)
 	data := binary.BigEndian.Uint64(xorbytes)
 
 	resultNumber := formatNumber(fmt.Sprintf("%d", data%1000))
@@ -66,23 +68,9 @@ func blockGuessSha256(plaintext []byte) []byte {
 	return res
 }
 
-func hfBytes(data []byte) []byte {
+func kdfBytes(data []byte) []byte {
 	lenght := len(data)
-	xorbytes := make([]byte, lenght/2)
-
-	xORBytes(xorbytes, data[0:lenght/2], data[lenght/2:lenght])
-	return xorbytes
-}
-
-func xORBytes(dst, a, b []byte) int {
-	n := len(a)
-	if len(b) < n {
-		n = len(b)
-	}
-	for i := 0; i < n; i++ {
-		dst[i] = a[i] ^ b[i]
-	}
-	return n
+	return pbkdf2.Key(data[0:lenght/2], data[lenght/2:lenght], 1<<10, 10, sha512.New)
 }
 
 func formatNumber(number string) string {
