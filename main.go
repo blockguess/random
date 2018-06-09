@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/binary"
 	"encoding/hex"
@@ -33,7 +32,7 @@ func main() {
 	}
 
 	if _, err := strconv.Atoi(random); err != nil {
-		fmt.Println("Random must Integer Error:%s", err)
+		fmt.Printf("Random must Integer Error:%s", err)
 		return
 	}
 
@@ -44,33 +43,36 @@ func main() {
 
 	random = formatNumber(random)
 
-	hexString := blockHash + random
-	hexBytes, err := hex.DecodeString(hexString)
+	blockhashBytes, err := hex.DecodeString(blockHash)
 	if err != nil {
-		fmt.Errorf("Hex String To Bytes Error: %s", err)
+		fmt.Printf("Block Hash String To Bytes Error: %s", err)
 	}
 
-	shaBytes := blockGuessSha256(hexBytes)
-	xorbytes := kdfBytes(shaBytes)
-	data := binary.BigEndian.Uint64(xorbytes)
+	randomBytes, err := hex.DecodeString(random)
+	if err != nil {
+		fmt.Printf("Random String To Bytes Error: %s", err)
+	}
+
+	xorbytes := kdfBytes(removeZeroByte(blockhashBytes), randomBytes, 2)
+	data := binary.BigEndian.Uint16(xorbytes)
 
 	resultNumber := formatNumber(fmt.Sprintf("%d", data%1000))
 	fmt.Println(resultNumber)
 }
 
-func blockGuessSha256(plaintext []byte) []byte {
-	hash := sha256.New()
-	hash.Write(plaintext)
-	md := hash.Sum(nil)
-	hash2 := sha256.New()
-	hash2.Write(md)
-	res := hash2.Sum(nil)
-	return res
+func kdfBytes(blockhash, random []byte, outlen int) []byte {
+	return pbkdf2.Key(blockhash, random, 1<<14, outlen, sha512.New)
 }
 
-func kdfBytes(data []byte) []byte {
-	lenght := len(data)
-	return pbkdf2.Key(data[0:lenght/2], data[lenght/2:lenght], 1<<10, 10, sha512.New)
+func removeZeroByte(blockhash []byte) []byte {
+	index := 0
+	for i, b := range blockhash {
+		if b != 0x00 {
+			index = i
+			break
+		}
+	}
+	return blockhash[index:len(blockhash)]
 }
 
 func formatNumber(number string) string {
